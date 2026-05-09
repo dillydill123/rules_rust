@@ -2792,9 +2792,13 @@ def _add_native_link_flags(
                     # )
                     # Explicitly use `-l:{}` syntax to link the exact library file to support versioned runtime libs.
                     args.add_all(
-                        [lib.basename for lib in runtime_libs],
+                        [lib.basename for lib in runtime_libs.to_list()],
                         format_each = "-Clink-arg=-l:%s"
                     )
+                    if runtime_libs:
+                        print(runtime_libs.to_list())
+                        print(args)
+                        fail("Testing...")
         else:
             args.add_all(
                 runtime_libs,
@@ -2807,23 +2811,6 @@ def _add_native_link_flags(
                     map_each = get_lib_name,
                     format_each = static_runtime_link_format,
                 )
-
-def _get_dynamic_runtime_link_arg(lib):
-    """Return the appropriate link arg for a dynamic runtime library.
-
-    For versioned shared libraries use `-l:<exact_basename>`. For non-versioned libraries the standard `-ldylib=<name>`
-    flag is used.
-
-    Args:
-        lib (File): A dynamic library file from the CC toolchain runtime.
-
-    Returns:
-        str: A rustc flag string.
-    """
-    basename = lib.basename
-    if ".so." in basename:
-        return "-Clink-arg=-l:{}".format(basename)
-    return "-ldylib={}".format(get_lib_name(lib))
 
 def _get_dirname(file):
     """A helper function for `_add_native_link_flags`.
